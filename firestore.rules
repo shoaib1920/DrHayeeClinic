@@ -1,0 +1,87 @@
+                      rules_version = '2';
+
+                      // Access mirrors the clinic's physical stations. A staff member's role lives in
+                      // /staff/{uid}, written by the admin in the console — never by the app — so a
+                      // user cannot promote themselves.
+                      //
+                      // Collections are listed explicitly; anything not named here is denied.
+                      service cloud.firestore {
+                        match /databases/{database}/documents {
+
+                          function signedIn() {
+                            return request.auth != null;
+                          }
+
+                          function role() {
+                            return get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.role;
+                          }
+
+                          function hasRole(name) {
+                            return signedIn()
+                              && exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+                              && role() == name;
+                          }
+
+                          function hasAnyRole(names) {
+                            return signedIn()
+                              && exists(/databases/$(database)/documents/staff/$(request.auth.uid))
+                              && role() in names;
+                          }
+
+                          // Every station needs to look patients up; only reception creates and edits them.
+                          match /patients/{patientId} {
+                            allow read: if signedIn();
+                            allow create, update: if hasAnyRole(['reception', 'doctor']);
+                            allow delete: if false;
+                          }
+
+                          // Reception issues tokens; the attendant moves patients in and out of the
+                          // cabin; the doctor records the consultation. Nobody deletes visits.
+                          match /visits/{visitId} {
+                            allow read: if signedIn();
+                            allow create: if hasRole('reception');
+                            allow update: if hasAnyRole(['reception', 'attendant', 'doctor']);
+                            allow delete: if false;
+                          }
+
+                          // Daily token counter, written inside reception's check-in transaction.
+                          match /counters/{date} {
+                            allow read: if signedIn();
+                            allow write: if hasRole('reception');
+                          }
+
+                          // The doctor orders tests; the lab fills in the results.
+                          match /labOrders/{labOrderId} {
+                            allow read: if signedIn();
+                            allow create: if hasRole('doctor');
+                            allow update: if hasRole('lab');
+                            allow delete: if false;
+                          }
+
+                          // Two drawers, two collectors: reception takes consultation money, the lab
+                          // takes lab money. Neither can write the other's bills.
+                          match /bills/{billId} {
+                            allow read: if signedIn();
+                            allow create: if (hasRole('reception') && request.resource.data.type == 'consultation')
+                                          || (hasRole('lab') && request.resource.data.type == 'lab');
+                            allow update: if (hasRole('reception') && resource.data.type == 'consultation')
+                                          || (hasRole('lab') && resource.data.type == 'lab');
+                            allow delete: if false;
+                          }
+
+                          // Fees, lab price list and diagnosis shortcuts. Everyone reads them
+                          // (reception prices consultations, the lab prices tests); only the doctor,
+                          // as the owner, may change them.
+                          match /settings/{docId} {
+                            allow read: if signedIn();
+                            allow write: if hasRole('doctor');
+                          }
+
+                          // Staff records are provisioned by the admin in the Firebase console.
+                          // The app reads its own role but can never write here.
+                          match /staff/{uid} {
+                            allow read: if signedIn();
+                            allow write: if false;
+                          }
+                        }
+                      }

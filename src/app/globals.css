@@ -1,0 +1,228 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * "Clinical Precision" design system — Dr. Abdul Hayee Medical Centre.
+ * Ported from the Stitch-generated reference designs (stitch_hayee_clinic_manager).
+ * Color/type/spacing tokens below are copied verbatim from that design system
+ * so screens can reuse the same Tailwind utility names (bg-surface-container-low,
+ * text-headline-lg, p-md, etc.) as the reference HTML.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-urdu: var(--font-noto-arabic);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Clinical Precision — full Material-3-style tonal palette */
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #ccdbf3;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e6eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d5e3fc;
+  --color-surface-variant: #d5e3fc;
+  --color-on-surface: #0d1c2e;
+  --color-on-surface-variant: #3d4947;
+  --color-inverse-surface: #233144;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-inverse-primary: #6bd8cb;
+  --color-outline: #6d7a77;
+  --color-outline-variant: #bcc9c6;
+  --color-surface-tint: #006a61;
+
+  --color-on-primary: #ffffff;
+  --color-primary-container: #008378;
+  --color-on-primary-container: #f4fffc;
+  --color-primary-fixed: #89f5e7;
+  --color-primary-fixed-dim: #6bd8cb;
+  --color-on-primary-fixed: #00201d;
+  --color-on-primary-fixed-variant: #005049;
+
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #7bc2ff;
+  --color-on-secondary-container: #004f7b;
+  --color-secondary-fixed: #cde5ff;
+  --color-secondary-fixed-dim: #94ccff;
+  --color-on-secondary-fixed: #001d32;
+  --color-on-secondary-fixed-variant: #004b74;
+
+  --color-tertiary: #595c5e;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #727577;
+  --color-on-tertiary-container: #fbfdff;
+  --color-tertiary-fixed: #e0e3e5;
+  --color-tertiary-fixed-dim: #c4c7c9;
+  --color-on-tertiary-fixed: #191c1e;
+  --color-on-tertiary-fixed-variant: #444749;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Type scale */
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 56px;
+  --text-display-lg--font-weight: 700;
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--font-weight: 600;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-label-md: 14px;
+  --text-label-md--line-height: 20px;
+  --text-urdu-body: 18px;
+  --text-urdu-body--line-height: 32px;
+
+  /* Spacing scale (named, alongside Tailwind's default numeric scale) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-gutter: 24px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 40px;
+
+  /*
+   * ⚠️ Do NOT use max-w-/w-/h-/size- with the names xs, sm, md, lg, or xl.
+   *
+   * The named --spacing-* keys above take priority over Tailwind's container
+   * scale for those five keys, so `max-w-xl` silently resolves to 32px (the
+   * spacing value) instead of 36rem, and `max-w-sm` to 8px. Defining
+   * --container-* does not override this.
+   *
+   * Use an arbitrary value instead — e.g. max-w-[36rem] — or a numeric key
+   * that doesn't collide, like max-w-2xl / max-w-7xl, which work normally.
+   */
+}
+
+:root {
+  --background: #f8f9ff;
+  --foreground: #0d1c2e;
+  --card: #ffffff;
+  --card-foreground: #0d1c2e;
+  --popover: #ffffff;
+  --popover-foreground: #0d1c2e;
+  --primary: #00685f;
+  --primary-foreground: #ffffff;
+  --secondary: #006399;
+  --secondary-foreground: #ffffff;
+  --muted: #eff4ff;
+  --muted-foreground: #3d4947;
+  --accent: #e6eeff;
+  --accent-foreground: #0d1c2e;
+  --destructive: #ba1a1a;
+  --border: #bcc9c6;
+  --input: #bcc9c6;
+  --ring: #006399;
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: #e6eeff;
+  --sidebar-foreground: #0d1c2e;
+  --sidebar-primary: #00685f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #7bc2ff;
+  --sidebar-accent-foreground: #004f7b;
+  --sidebar-border: #bcc9c6;
+  --sidebar-ring: #006399;
+}
+
+.dark {
+  --background: #0d1c2e;
+  --foreground: #eaf1ff;
+  --card: #233144;
+  --card-foreground: #eaf1ff;
+  --popover: #233144;
+  --popover-foreground: #eaf1ff;
+  --primary: #6bd8cb;
+  --primary-foreground: #00201d;
+  --secondary: #94ccff;
+  --secondary-foreground: #001d32;
+  --muted: #233144;
+  --muted-foreground: #bcc9c6;
+  --accent: #233144;
+  --accent-foreground: #eaf1ff;
+  --destructive: #ffb4ab;
+  --border: rgba(234, 241, 255, 0.15);
+  --input: rgba(234, 241, 255, 0.2);
+  --ring: #94ccff;
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: #233144;
+  --sidebar-foreground: #eaf1ff;
+  --sidebar-primary: #6bd8cb;
+  --sidebar-primary-foreground: #00201d;
+  --sidebar-accent: #004b74;
+  --sidebar-accent-foreground: #cde5ff;
+  --sidebar-border: rgba(234, 241, 255, 0.15);
+  --sidebar-ring: #94ccff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
