@@ -132,6 +132,7 @@ export default function LabPage() {
                   <button
                     onClick={() =>
                       printLabReport({
+                        patientId: order.patientId,
                         patientName: order.patientName,
                         tokenNumber: order.tokenNumber,
                         tests: order.tests,
@@ -185,6 +186,7 @@ function LabOrderCard({ order, bill }: { order: LabOrder; bill?: Bill }) {
       toast.success(`Rs ${created.total} received from ${order.patientName}.`);
       printReceipt({
         title: "Lab Receipt",
+        patientId: order.patientId,
         patientName: order.patientName,
         tokenNumber: order.tokenNumber,
         items: created.items,
@@ -326,6 +328,7 @@ function LabOrderCard({ order, bill }: { order: LabOrder; bill?: Bill }) {
           <button
             onClick={() =>
               printLabReport({
+                patientId: order.patientId,
                 patientName: order.patientName,
                 tokenNumber: order.tokenNumber,
                 tests,

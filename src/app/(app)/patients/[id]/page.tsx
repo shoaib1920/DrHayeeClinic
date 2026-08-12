@@ -202,6 +202,7 @@ export default function PatientProfilePage() {
           <button
             onClick={() =>
               printPatientCard({
+                patientId: patient.id,
                 mrNo: patient.mrNo,
                 patientName: patient.name,
                 phone: patient.phone,
@@ -459,11 +460,12 @@ export default function PatientProfilePage() {
                         <button
                           onClick={() =>
                             printPrescriptionSlip({
+                              patientId: patient.id,
                               patientName: patient.name,
                               tokenNumber: visit.tokenNumber,
                               age: patient.age,
                               gender: patient.gender,
-                              mrNo: patient.id.slice(0, 8).toUpperCase(),
+                              mrNo: patient.mrNo ? String(patient.mrNo) : undefined,
                               diagnosis: visit.diagnosis,
                               vitals: visit.vitals,
                             })
@@ -478,6 +480,7 @@ export default function PatientProfilePage() {
                           <button
                             onClick={() =>
                               printLabReport({
+                                patientId: patient.id,
                                 patientName: patient.name,
                                 tokenNumber: visit.tokenNumber,
                                 tests: visitLabOrders.flatMap((o) => o.tests),
@@ -494,6 +497,7 @@ export default function PatientProfilePage() {
                             onClick={() =>
                               printReceipt({
                                 title: bill.type === "lab" ? "Lab Receipt" : "Consultation Receipt",
+                                patientId: patient.id,
                                 patientName: patient.name,
                                 tokenNumber: bill.tokenNumber,
                                 items: bill.items,

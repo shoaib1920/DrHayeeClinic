@@ -1,3 +1,5 @@
+import QRCode from "qrcode";
+
 const PRIMARY = "#00685f";
 const ON_SURFACE_VARIANT = "#3d4947";
 const OUTLINE_VARIANT = "#bcc9c6";
@@ -20,8 +22,48 @@ const PRINT_BASE_STYLE = `
   .signature { text-align: center; width: 220px; border-top: 2px solid #0d1c2e; padding-top: 6px; }
   .signature p:first-child { margin: 0; font-weight: bold; }
   .signature p:last-child { margin: 2px 0 0; font-size: 10px; color: ${ON_SURFACE_VARIANT}; letter-spacing: 0.08em; text-transform: uppercase; }
+  .qr-block { display: flex; align-items: center; gap: 10px; }
+  .qr-block svg { width: 76px; height: 76px; flex-shrink: 0; }
+  .qr-block p { margin: 0; font-size: 9px; line-height: 1.4; color: ${ON_SURFACE_VARIANT}; max-width: 110px; }
   @media print { .no-print { display: none !important; } }
 `;
+
+/** The URL a scanner (phone camera or a handheld gun) opens to the patient's full record. */
+function patientHistoryUrl(patientId: string): string {
+  return `${window.location.origin}/patients/${patientId}`;
+}
+
+/**
+ * Reverse of patientHistoryUrl. A handheld USB/Bluetooth scanner "types" the
+ * decoded text (plus Enter) into whatever's focused, so a scan can land as a
+ * full URL inside an ordinary search box instead of opening a browser tab.
+ * The patient search screen uses this to recognise that and jump straight to
+ * the record instead of searching for the literal URL text.
+ */
+export function extractPatientIdFromScan(text: string): string | null {
+  const match = text.trim().match(/\/patients\/([a-zA-Z0-9_-]+)\/?$/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Inline SVG QR block for a printable document, or "" when there's no patient
+ * to link (e.g. the clinic-wide closing report). Generated locally — no
+ * network call — so it still works when the clinic's internet is down.
+ */
+async function qrBlock(patientId: string | undefined, caption: string): Promise<string> {
+  if (!patientId) return "";
+  try {
+    const svg = await QRCode.toString(patientHistoryUrl(patientId), {
+      type: "svg",
+      margin: 0,
+      color: { dark: "#0d1c2e", light: "#ffffff" },
+    });
+    return `<div class="qr-block">${svg}<p>${caption}</p></div>`;
+  } catch (error) {
+    console.error("Could not generate QR code", error);
+    return "";
+  }
+}
 
 function openPrintWindow(title: string, bodyHtml: string, extraStyle = ""): void {
   const win = window.open("", "_blank", "width=520,height=720");
@@ -72,6 +114,7 @@ function today(): string {
 /* ---------------------------------------------------------------- reception */
 
 interface TokenSlipData {
+  patientId: string;
   tokenNumber: number;
   patientName: string;
   age?: number;
@@ -80,7 +123,8 @@ interface TokenSlipData {
 }
 
 /** Small slip handed to the patient at the token desk. */
-export function printTokenSlip(data: TokenSlipData): void {
+export async function printTokenSlip(data: TokenSlipData): Promise<void> {
+  const qr = await qrBlock(data.patientId, "Scan for this patient's full record on the doctor's screen");
   openPrintWindow(
     "Token Slip",
     `
@@ -103,6 +147,7 @@ export function printTokenSlip(data: TokenSlipData): void {
       <p style="text-align:center;margin-top:20px;font-size:11px;color:${ON_SURFACE_VARIANT};">
         Please keep this slip and wait for your token to be called.
       </p>
+      ${qr ? `<div class="footer">${qr}</div>` : ""}
     `,
   );
 }
@@ -110,6 +155,7 @@ export function printTokenSlip(data: TokenSlipData): void {
 /* ------------------------------------------------------------------ doctor */
 
 interface PrescriptionSlipData {
+  patientId: string;
   patientName: string;
   tokenNumber?: number;
   age?: number;
@@ -124,7 +170,8 @@ interface PrescriptionSlipData {
  * are filled in, and the ℞ area is left blank for the doctor to write the
  * medicines by hand — matching how the clinic has always worked.
  */
-export function printPrescriptionSlip(data: PrescriptionSlipData): void {
+export async function printPrescriptionSlip(data: PrescriptionSlipData): Promise<void> {
+  const qr = await qrBlock(data.patientId, "Scan to open this patient's full history");
   const vitalCells = [
     data.vitals?.bp
       ? `<div><span class="label">BP</span><span class="value">${escapeHtml(data.vitals.bp)}</span></div>`
@@ -159,7 +206,7 @@ export function printPrescriptionSlip(data: PrescriptionSlipData): void {
         <span class="rx-symbol">&#8478;</span>
       </div>
       <div class="footer">
-        <p style="font-size:10px;color:${ON_SURFACE_VARIANT};max-width:220px;">Health First &bull; Patient Focus &bull; Clinical Excellence</p>
+        ${qr || `<p style="font-size:10px;color:${ON_SURFACE_VARIANT};max-width:220px;">Health First &bull; Patient Focus &bull; Clinical Excellence</p>`}
         <div class="signature">
           <p>Dr. Abdul Hayee</p>
           <p>Authorized Signature</p>
@@ -187,12 +234,14 @@ export function printPrescriptionSlip(data: PrescriptionSlipData): void {
 /* --------------------------------------------------------------------- lab */
 
 interface LabReportData {
+  patientId: string;
   patientName: string;
   tokenNumber?: number;
   tests: { name: string; result?: string; unit?: string }[];
 }
 
-export function printLabReport(data: LabReportData): void {
+export async function printLabReport(data: LabReportData): Promise<void> {
+  const qr = await qrBlock(data.patientId, "Scan to open this patient's full history");
   const rows = data.tests
     .map(
       (t) => `
@@ -218,7 +267,7 @@ export function printLabReport(data: LabReportData): void {
         <tbody>${rows}</tbody>
       </table>
       <div class="footer">
-        <p style="font-size:10px;color:${ON_SURFACE_VARIANT};">Results verified by the clinic laboratory.</p>
+        ${qr || `<p style="font-size:10px;color:${ON_SURFACE_VARIANT};">Results verified by the clinic laboratory.</p>`}
         <div class="signature">
           <p>Lab Technician</p>
           <p>Signature</p>
@@ -232,6 +281,7 @@ export function printLabReport(data: LabReportData): void {
 
 interface ReceiptData {
   title: string;
+  patientId: string;
   patientName: string;
   tokenNumber?: number;
   items: { label: string; amount: number }[];
@@ -239,7 +289,8 @@ interface ReceiptData {
   paid: boolean;
 }
 
-export function printReceipt(data: ReceiptData): void {
+export async function printReceipt(data: ReceiptData): Promise<void> {
+  const qr = await qrBlock(data.patientId, "Scan to open this patient's full history");
   const rows = data.items
     .map(
       (i) =>
@@ -267,7 +318,7 @@ export function printReceipt(data: ReceiptData): void {
         ${data.paid ? "PAID" : "UNPAID"}
       </p>
       <div class="footer">
-        <p style="font-size:10px;color:${ON_SURFACE_VARIANT};max-width:240px;">Computer-generated receipt — no physical signature required.</p>
+        ${qr || `<p style="font-size:10px;color:${ON_SURFACE_VARIANT};max-width:240px;">Computer-generated receipt — no physical signature required.</p>`}
         <div class="signature">
           <p>Dr. Abdul Hayee Medical Centre</p>
           <p>Nankana Sahib</p>
@@ -280,6 +331,7 @@ export function printReceipt(data: ReceiptData): void {
 /* ------------------------------------------------------------ patient card */
 
 interface PatientCardData {
+  patientId: string;
   mrNo?: number;
   patientName: string;
   phone: string;
@@ -290,9 +342,11 @@ interface PatientCardData {
 /**
  * Wallet-sized card the patient keeps and brings back. Reception types the MR
  * number instead of guessing name spellings, which is both faster and the
- * cheapest defence against creating duplicate records.
+ * cheapest defence against creating duplicate records. The QR is the fast
+ * path: scan it at any station and the patient's full record opens directly.
  */
-export function printPatientCard(data: PatientCardData): void {
+export async function printPatientCard(data: PatientCardData): Promise<void> {
+  const qr = await qrBlock(data.patientId, "Scan at any station to open this patient's record");
   openPrintWindow(
     "Patient Card",
     `
@@ -306,6 +360,7 @@ export function printPatientCard(data: PatientCardData): void {
         <div><span class="label">Phone</span><span class="value">${escapeHtml(data.phone)}</span></div>
         <div><span class="label">Age / Gender</span><span class="value">${[data.age ? `${data.age} Yrs` : null, data.gender].filter(Boolean).join(" / ") || "—"}</span></div>
       </div>
+      ${qr ? `<div style="display:flex;justify-content:center;margin-top:16px;">${qr}</div>` : ""}
       <p style="text-align:center;margin-top:20px;font-size:12px;color:${ON_SURFACE_VARIANT};">
         Please bring this card on every visit and show it at the token desk.
       </p>

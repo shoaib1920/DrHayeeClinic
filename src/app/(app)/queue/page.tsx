@@ -234,6 +234,7 @@ export default function ReceptionPage() {
                         <button
                           onClick={() =>
                             printTokenSlip({
+                              patientId: visit.patientId,
                               tokenNumber: visit.tokenNumber,
                               patientName: visit.patientName,
                               age: visit.patientAge,

@@ -17,7 +17,10 @@ export default function AppRouteGroupLayout({ children }: { children: React.Reac
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.replace("/login");
+      // Preserves where they were headed — most often a QR code scanned
+      // straight to a patient's record — so login doesn't dead-end them
+      // back at their role's home screen.
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
     // Signed in with a role, but on a screen belonging to another station —
@@ -25,7 +28,7 @@ export default function AppRouteGroupLayout({ children }: { children: React.Reac
     if (staff && !allowed) {
       router.replace(ROLE_HOME[staff.role]);
     }
-  }, [loading, user, staff, allowed, router]);
+  }, [loading, user, staff, allowed, pathname, router]);
 
   if (loading || !user) {
     return (

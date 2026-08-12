@@ -3,10 +3,20 @@
 import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { AlertTriangle, ArrowRight, Eye, EyeOff, Lock, Mail, Stethoscope } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { type FormEvent, Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { auth, isFirebaseConfigured } from "@/lib/firebase/client";
+
+/**
+ * Only ever follow a same-site path (starts with exactly one "/"), never a
+ * scheme-relative URL like "//evil.com" — this value comes straight from the
+ * query string, so it must not be trusted as a redirect target otherwise.
+ */
+function safeRedirect(target: string | null): string | null {
+  if (!target) return null;
+  return /^\/(?!\/)/.test(target) ? target : null;
+}
 
 function loginErrorMessage(error: unknown): string {
   if (error instanceof FirebaseError) {
@@ -28,7 +38,19 @@ function loginErrorMessage(error: unknown): string {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+// useSearchParams() (for the post-login redirect target) requires a Suspense
+// boundary above it in the App Router, hence the wrapper component above.
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = safeRedirect(searchParams.get("redirect")) ?? "/";
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,9 +61,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/");
+      router.replace(redirectTo);
     }
-  }, [loading, user, router]);
+  }, [loading, user, redirectTo, router]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -50,7 +72,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      router.replace("/");
+      router.replace(redirectTo);
     } catch (err) {
       setError(loginErrorMessage(err));
     } finally {

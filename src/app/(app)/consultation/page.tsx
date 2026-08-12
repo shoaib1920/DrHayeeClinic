@@ -125,11 +125,12 @@ function ConsultationForm({ visit }: { visit: Visit }) {
 
   function handlePrintSlip() {
     printPrescriptionSlip({
+      patientId: visit.patientId,
       patientName: visit.patientName,
       tokenNumber: visit.tokenNumber,
       age: patient?.age ?? visit.patientAge,
       gender: patient?.gender ?? visit.patientGender,
-      mrNo: visit.patientId.slice(0, 8).toUpperCase(),
+      mrNo: patient?.mrNo ? String(patient.mrNo) : undefined,
       diagnosis,
       vitals,
     });

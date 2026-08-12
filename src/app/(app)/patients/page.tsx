@@ -2,23 +2,36 @@
 
 import { Search, User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { QueryError } from "@/components/layout/query-error";
 import { searchPatients } from "@/lib/firestore/patients";
+import { extractPatientIdFromScan } from "@/lib/share";
 import type { Patient } from "@/types/patient";
 
 /**
  * Patient lookup, for when someone needs a record outside the live queue —
- * a patient who lost their slip, or a phone enquiry about an old visit.
+ * a patient who lost their slip, a phone enquiry about an old visit, or a
+ * handheld barcode scanner aimed at this box (its keystrokes land here since
+ * the search field is focused by default).
  */
 export default function PatientsPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Patient[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // A handheld scanner types the full patient-record URL rather than
+    // opening it, so jump straight there instead of searching for the URL.
+    const scannedId = extractPatientIdFromScan(query);
+    if (scannedId) {
+      router.push(`/patients/${scannedId}`);
+      return;
+    }
+
     if (!query.trim()) return;
     let cancelled = false;
     const timeout = setTimeout(() => {
@@ -41,7 +54,7 @@ export default function PatientsPage() {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [query]);
+  }, [query, router]);
 
   const trimmed = query.trim();
   const displayed = trimmed ? results : [];
@@ -52,7 +65,7 @@ export default function PatientsPage() {
         <div className="space-y-sm">
           <h1 className="font-headline-lg text-headline-lg text-on-surface">Find a Patient</h1>
           <p className="text-on-surface-variant">
-            Search by phone number or name to open the full record, past visits and slips.
+            Search by phone number or name, or scan the QR code on a token, slip or patient card.
           </p>
         </div>
 
